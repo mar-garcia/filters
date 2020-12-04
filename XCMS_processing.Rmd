@@ -177,7 +177,7 @@ xdata <- fillChromPeaks(xdata, param = fcp)
 ```
 
 
-```{r peak-filling-checking-correlation, eval = TRUE}
+```{r peak-filling-checking-correlation, eval = FALSE}
 data <- quantify(xdata, method = "sum", filled = FALSE)
 assays(data)$raw_filled <- featureValues(xdata, method = "sum",
                                          filled = TRUE)
@@ -199,7 +199,7 @@ signal.
 
 Below, we are going to plot the outliers observed in the previous plot (in case there is any outlier).
 
-```{r peak-filling-ckecking-eic, eval = TRUE}
+```{r peak-filling-ckecking-eic, eval = FALSE}
 fts <- names(which(log2(avg_det) > (log2(avg_fil)*1.5)))
 if(length(fts) > 0){
   for(i in 1:length(fts)){
