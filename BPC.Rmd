@@ -1,0 +1,91 @@
+---
+title: "BPC"
+author: "Mar Garcia-Aloy"
+output: 
+  html_document:
+    toc: false
+    number_sections: false
+    toc_float: false
+---
+
+```{r startpoint, include = FALSE}
+startpoint <- Sys.time()
+```
+
+
+# Preliminaries
+
+## Parameters
+
+```{r parameters}
+polarity <- "POS" # specify "POS" or "NEG"
+```
+
+
+## Libraries
+
+```{r libraries, message=FALSE}
+library(xcms)
+```
+
+
+# Data import
+
+```{r data-import}
+#  Get filenames
+injections <- data.frame(
+  filename = list.files(paste0("data/", polarity, "_fixed/"))
+)
+tmp <- strsplit(gsub(".mzData", "", injections$filename), "_")
+tmp <- data.frame(do.call(rbind, tmp))
+colnames(tmp) <- c("order", "solvent", "filter", "polarity", "repl")
+injections <- cbind(injections, tmp)
+rm(tmp)
+injections$filter <- factor(
+  injections$filter, 
+  levels = c("nonfilter", "milex", "clarify", "minisart"))
+injections$solvent <- factor(injections$solvent, 
+                             levels = unique(injections$solvent))
+
+
+# Read the data
+for(i in 1:length(levels(injections$filter))){
+  for(j in 1:length(levels(injections$solvent))){
+    idx <- which(injections$filter == levels(injections$filter)[i] & 
+                   injections$solvent == levels(injections$solvent)[j])
+    data_raw <- readMSData(
+      paste0("data/", polarity, "_fixed/" , 
+             injections$filename[idx]),
+      pdata = as(AnnotatedDataFrame(injections[idx,]),
+                 "NAnnotatedDataFrame"), 
+      mode = "onDisk")
+    assign(paste0("data_", levels(injections$solvent)[j], "_", 
+                  levels(injections$filter)[i]), data_raw)
+  }
+}
+rm(i, j, idx, data_raw)
+```
+
+# BPC
+
+```{r BPC}
+par(mfrow = c(4,1), mar = c(0,0,1,0))
+for(j in 1:length(levels(injections$solvent))){
+  print(levels(injections$solvent)[j])
+  for(i in 1:length(levels(injections$filter))){
+    data_raw <- get(paste0("data_", levels(injections$solvent)[j], "_", 
+                           levels(injections$filter)[i]))
+    chr <- chromatogram(data_raw, aggregationFun = "max")
+    plot(chr, main = levels(injections$filter)[i], 
+         xaxt='n', yaxt = "n", bty = "n", col = i)
+  }
+}
+```
+
+
+# Session information
+
+```{r session}
+Sys.time()-startpoint
+devtools::session_info()
+```
